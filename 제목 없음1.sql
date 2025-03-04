@@ -263,12 +263,27 @@ WHERE  manager_id IS NULL;
 --10. 이름의 세번째 문자가 a인 모든 사원의 이름을 표시하시오.
 SELECT last_name
 FROM   employees
-WHERE  
+WHERE  last_name LIKE '__a%';
 
 --11. 이름에 a와 e가 있는 모든 사원의 이름을 표시하시오.
+SELECT last_name
+FROM   employees
+WHERE  last_name LIKE '%a%' AND
+       last_name LIKE '%e%';
 --
 --12. 업무가 영업 사원(SA_REP) 또는 사무원(ST_CLERK)이면서 
 --    급여가 2,500, 3,500, 7,000이 아닌 모든 사원의 이름, 업무 및 급여를 표시하시오.
+SELECT last_name,
+       job_id,
+       salary
+FROM   employees
+WHERE  job_id IN ('SA_REP','ST_CLERK') AND
+       salary NOT IN ('2500','3500','7000');
 --
 --13. 커미션 비율(commission_pct)이 20%인 모든 사원의 이름, 급여 및 커미션을 표시하도록 
 --    명령문을 작성하여 실행하시오.
+SELECT last_name,
+       salary,
+       commission_pct
+FROM   employees
+WHERE  commission_pct = 0.2;
