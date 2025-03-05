@@ -621,7 +621,7 @@ FROM   employees;
 --   열 레이블을 Dream Salaries로 지정하시오. (변환 함수, 연결 연산자)
 --<employee last_name> earns <salary> monthly but wants <salary의 3배>. 
 --<예시> Matos earns $2,600.00 monthly but wants $7,800.00.
-SELECT last_name||' earns'||TO_CHAR(salary,'$999,999.99')||' monthly but watns'||TO_CHAR(salary*3,'$999,999.99')
+SELECT last_name||' earns'||TO_CHAR(salary,'$999,999.00')||' monthly but watns'||TO_CHAR(salary*3,'$999,999.00')
 FROM   employees;
 
 --2. 사원의 이름, 입사일 및 급여 검토일을 표시하시오.
@@ -630,18 +630,32 @@ FROM   employees;
 --   날짜는 "2010.03.31 월요일"과 같은 형식으로 표시되도록 지정하시오. (날짜 함수)
 SELECT last_name,
        hire_date,
-       NEXT_DAY(ADD_MONTHS(hire_date, 6),'Monday') REVIEW
+       NEXT_DAY(ADD_MONTHS(hire_date, 6),'월') REVIEW
 FROM   employees;
        
 
 --3. 이름, 입사일 및 업무 시작 요일을 표시하고
 --   열 레이블을 DAY로 지정하시오. (날짜 함수)
 --   월요일을 시작으로 해서 요일을 기준으로 결과를 정렬하시오. (산수)
+SELECT last_name,
+       hire_date,
+       TO_CHAR(hire_date,'DAY') DAY
+FROM   employees
+ORDER BY TO_CHAR(hire_date-1, 'd');
+
+SELECT TO_CHAR(hire_date, 'DAY'),
+       TO_CHAR(hire_date-1, 'DAY'),
+       TO_CHAR(hire_date, 'd'),
+       TO_CHAR(hire_date-1, 'd')
+FROM   employees;
 
 --4. 사원의 이름과 커미션을 표시하는 질의를 작성하시오.
 --   커미션을 받지 않는 사원일 경우 “No Commission”을 표시하시오. (NVL 함수)
 --   열 레이블은 COMM으로 지정하시오.
---
+SELECT last_name,
+       NVL(TO_CHAR(commission_pct), 'No Commission') COMM
+FROM   employees;
+
 --5. CASE 구문을 사용하여 
 --   다음 데이터에 따라 JOB_ID 열의 값을 기준으로 
 --   모든 사원의 등급을 표시하는 질의를 작성하시오.
@@ -653,3 +667,500 @@ FROM   employees;
 --SA_REP      D
 --ST_CLERK    E
 --그외         0
+
+SELECT job_id,
+       CASE   WHEN job_id = 'AD_PRES'  THEN 'A'
+              WHEN job_id = 'ST_MAN'   THEN 'B'
+              WHEN job_id = 'IT_PROG'  THEN 'C'
+              WHEN job_id = 'SA_REP'   THEN 'D'
+              WHEN job_id = 'ST_CLERK' THEN 'E'
+                                       ELSE '0'
+       END AS grade
+FROM   employees;
+
+SELECT AVG(salary), 
+       MAX(salary),
+       MIN(salary),
+       SUM(salary)
+FROM   employees;
+
+SELECT MIN(hire_date),
+       MAX(hire_date)
+FROM   employees;
+
+SELECT MIN(last_name),
+       MAX(last_name)
+FROM   employees;
+
+SELECT COUNT(*)
+FROM employees
+WHERE department_id = 50;
+
+SELECT COUNT(commission_pct)
+FROM employees
+WHERE department_id = 80;
+
+SELECT AVG(commission_pct),
+       AVG(NVL(commission_pct, 0))
+FROM   employees;
+
+SELECT COUNT(commission_pct),
+       COUNT(NVL(commission_pct, 0))
+FROM   employees;
+SELECT COUNT(commission_pct),
+       COUNT(NVL(commission_pct, 0))
+FROM   employees;
+
+SELECT COUNT(department_id),
+       COUNT(DISTINCT department_id)
+FROM   employees;
+
+SELECT   department_id,
+         AVG(salary)
+FROM     employees
+GROUP BY department_id;
+
+SELECT   AVG(salary)
+FROM     employees
+GROUP BY department_id;
+
+SELECT   department_id,
+         AVG(salary)
+FROM     employees
+GROUP BY department_id
+ORDER BY AVG(salary);
+
+SELECT   department_id,
+         job_id,
+         sum(salary)
+FROM     employees
+GROUP BY department_id,
+         job_id
+ORDER BY job_id;
+
+SELECT   department_id,
+         job_id,
+         sum(salary)
+FROM     employees
+WHERE    department_id > 40
+GROUP BY department_id,
+         job_id
+ORDER BY department_id;
+
+--WHERE 절에는 GROUP 함수를 쓸 수 없다, HAVING 절에서 사용
+--실행 순서
+--5 SELECT
+--1 FROM
+--2 WHERE
+--3 GROUP BY
+--4 HAVING
+--6 ORDER BY
+
+SELECT    department_id,
+          MAX(salary)
+FROM      employees
+GROUP BY  department_id
+HAVING    MAX(salary)>10000;
+
+SELECT   department_id,
+         AVG(salary)
+FROM     employees
+GROUP BY department_id
+HAVING   MAX(salary)>10000;
+
+SELECT    job_id,
+          SUM(salary) PAYROLL
+FROM      employees
+WHERE     job_id NOT LIKE '%REP%'
+GROUP BY  job_id
+HAVING    SUM(salary) > 13000
+ORDER BY  SUM(salary);
+
+SELECT    MAX(AVG(salary))
+FROM      employees
+GROUP BY  department_id;
+
+SELECT    department_id, --GROUP함수가 있을 때는 SELECT 절에 어떠한 COLUMN도 오면 안된다
+          MAX(AVG(salary))
+FROM      employees
+GROUP BY  department_id;
+
+--다음 세 문장의 유효성을 판별하여 True 또는 False로 답하시오.
+--1. 그룹 함수는 여러 행에 적용되어 그룹 당 하나의 결과를 출력한다.
+-- TRUE
+--2. 그룹 함수는 계산에 널을 포함한다.
+-- FALSE
+--3. WHERE 절은 그룹 계산에 행(row)을 포함시키기 전에 행을 제한한다.
+-- FALSE
+--4. 모든 사원의 급여 최고액, 최저액, 총액 및 평균액을 표시하시오. 열 레이블을 각각 Maximum, Minimum, Sum 및 Average로 지정하고 결과를 정수로 반올림하도록 작성하시오.
+SELECT MAX(salary) Maximum,
+       MIN(salary) Minimum,
+       SUM(salary) Sum,
+       ROUND(AVG(salary),0) Average
+FROM   employees;
+
+--5. 위의 질의를 수정하여 각 업무 유형(job_id)별로 급여 최고액, 최저액, 총액 및 평균액을 표시하시오. 
+SELECT job_id,
+       ROUND(MAX(salary)) "Maximum",
+       ROUND(MIN(salary)) "Minimum",
+       ROUND(SUM(salary)) "Sum",
+       ROUND(AVG(salary)) "Average"
+FROM   employees
+GROUP BY job_id;
+
+--6. 업무별 사원 수를 표시하는 질의를 작성하시오.
+SELECT job_id,
+       COUNT(*)
+FROM   employees
+GROUP BY job_id;
+
+--7. 관리자 수를 확인하시오. 열 레이블은 Number of Managers로 지정하시오. (힌트: MANAGER_ID 열을 사용)
+SELECT COUNT(DISTINCT manager_id) AS "Number of Managers"
+FROM   employees;
+
+--8. 최고 급여와 최저 급여의 차액을 표시하는 질의를 작성하고 열 레이블을 DIFFERENCE로 지정하시오.
+SELECT MAX(salary)-MIN(salary) DIFFERENCE
+FROM employees;
+
+--9. 관리자 번호 및 해당 관리자에 속한 사원의 최저 급여를 표시하시오.
+--관리자를 알 수 없는 사원 및 최저 급여가 6,000 미만인 그룹은 제외시키고 결과를 급여에 대한 내림차순으로 정렬하시오.
+SELECT   manager_id,
+         MIN(salary)
+FROM     employees
+WHERE    manager_id IS NOT NULL
+GROUP BY manager_id
+HAVING   MIN(salary) >= 6000
+ORDER BY MIN(salary);
+
+SELECT *
+FROM   employees;
+
+SELECT *
+FROM   departments;
+
+SELECT employee_id, department_name
+FROM   employees, departments;
+
+SELECT employee_id, department_name
+FROM   employees CROSS JOIN departments;
+
+-- n개의 테이블을 함께 조인하려면, 최소 (n-1)개의 조인 조건문이 필요
+
+SELECT *
+FROM   job_history;
+
+SELECT   *
+FROM     job_history
+ORDER BY employee_id;
+
+SELECT *
+FROM   employees;
+
+SELECT employee_id,
+       job_id
+FROM   employees
+UNION
+SELECT employee_id,
+       job_id
+FROM   job_history;
+
+ALTER SESSION SET
+NLS_DATE_LANGUAGE=AMERICAN;
+
+SELECT *
+FROM   job_history;
+
+SELECT *
+FROM   employees;
+
+SELECT employee_id,
+       job_id
+FROM   employees
+UNION
+SELECT employee_id,
+       job_id
+FROM   job_history;
+
+commit;
+
+SELECT employee_id,
+       job_id,
+       department_id
+FROM   employees
+UNION
+SELECT employee_id,
+       job_id,
+       department_id
+FROM   job_history;
+
+SELECT   employee_id,
+         job_id
+FROM     employees
+UNION
+SELECT   employee_id,
+         job_id
+FROM     job_history
+ORDER BY job_id;
+
+--UNION ALL -> 디폴트로 정렬 안됨
+
+SELECT   employee_id,
+         job_id,
+         department_id
+FROM     employees
+UNION ALL
+SELECT   employee_id,
+         job_id,
+         department_id
+FROM     job_history
+ORDER BY employee_id;
+
+SELECT   employee_id,
+         job_id
+FROM     employees
+INTERSECT
+SELECT   employee_id,
+         job_id
+FROM     job_history;
+
+SELECT employee_id,
+       job_id
+FROM   employees
+MINUS
+SELECT employee_id,
+       job_id
+FROM   job_history;
+
+SELECT employee_id,
+       job_id
+FROM   job_history
+MINUS
+SELECT employee_id,
+       job_id
+FROM   employees;
+
+SELECT last_name,
+       department_name
+FROM   employees CROSS JOIN departments;
+
+SELECT department_id,
+       department_name,
+       location_id,
+       city
+FROM   departments
+NATURAL JOIN locations;
+
+SELECT employee_id,
+       last_name,
+       location_id,
+       department_id
+FROM   employees
+JOIN   departments
+USING  (department_id);
+
+--조인 조건 직접 명시하는 ON절 구문만 주로 사용 (기본키와 외래키 사용)
+--아래처럼 사용
+SELECT e.employee_id,
+       e.last_name,
+       e.department_id,
+       d.department_id,
+       d.location_id
+FROM   employees e JOIN departments d
+        ON (e.department_id = d.department_id);
+
+--위와 아래의 결과는 같음
+
+SELECT e.employee_id,
+       e.last_name,
+       e.department_id,
+       d.department_id,
+       d.location_id
+FROM   employees e , departments d
+WHERE  e.department_id = d.department_id;
+
+SELECT e.employee_id,
+       l.city,
+       d.department_name
+FROM   employees e 
+         JOIN departments d
+           ON (d.department_id = e.department_id)
+         JOIN locations l
+           ON (d.location_id = l.location_id);
+           
+-- ORACLE JOIN ↓
+SELECT e.employee_id,
+       l.city,
+       d.department_name
+FROM   employees e, departments d,locations l
+WHERE  d.department_id = e.department_id
+  AND  d.location_id = l.location_id;
+  
+SELECT e.employee_id,
+       e.last_name,
+       e.department_id,
+       d.department_id,
+       d.location_id
+FROM   employees e JOIN departments d
+           ON (e.department_id = d.department_id)
+               AND e.manager_id = 149;
+               
+SELECT e.employee_id,
+       e.last_name,
+       e.department_id,
+       d.department_id,
+       d.location_id
+FROM   employees e JOIN departments d
+           ON (e.department_id = d.department_id)
+WHERE  e.manager_id = 149;
+
+--ORACLE JOIN ON ↓
+SELECT e.employee_id,
+       e.last_name,
+       e.department_id,
+       d.department_id,
+       d.location_id
+FROM   employees e, departments d
+WHERE  e.department_id = d.department_id
+  AND  e.manager_id = 149;
+  
+--같은 테이블의 ALIAS를 다르게 하여 두 개의 테이블로 인식시킴 - SELF JOIN
+SELECT w.last_name emp,
+       m.last_name mgr
+FROM   employees w JOIN employees m
+                 ON (w.manager_id = m.employee_id);
+
+--ORACLE SELF JOIN
+SELECT w.last_name emp,
+       m.last_name mgr
+FROM   employees w, employees m
+WHERE  w.manager_id = m.employee_id;
+
+--BETWEEN JOIN
+SELECT e.last_name,
+       e.salary,
+       j.grade_level
+FROM   employees e JOIN job_grades j
+                 ON     e.salary
+                        BETWEEN j.lowest_sal AND j.highest_sal;
+                     
+--ORACLE BETWEEN JOIN
+SELECT e.last_name,
+       e.salary,
+       j.grade_level
+FROM   employees e, job_grades j
+WHERE  e.salary BETWEEN j.lowest_sal AND j.highest_sal;
+
+SELECT e.last_name,
+       e.department_id,
+       d.department_name
+FROM   employees e JOIN departments d
+       ON (e.department_id = d.department_id);
+
+-- LEFT OUTER JOIN(LEFT TABLE의 NULL 포함)
+SELECT e.last_name,
+       e.department_id,
+       d.department_name
+FROM   employees e LEFT OUTER JOIN departments d
+       ON (e.department_id = d.department_id);
+       
+-- RIGHT OUTER JOIN(RIGHT TABLE의 NULL 포함)
+SELECT e.last_name,
+       e.department_id,
+       d.department_name
+FROM   employees e RIGHT OUTER JOIN departments d
+       ON (e.department_id = d.department_id);
+       
+-- FULL OUTER JOIN(둘 다 NULL 포함)
+SELECT e.last_name,
+       e.department_id,
+       d.department_name
+FROM   employees e FULL OUTER JOIN departments d
+       ON (e.department_id = d.department_id);
+       
+--ORACLE 에서는 'OUTER' 빼도 됨
+SELECT e.last_name,
+       e.department_id,
+       d.department_name
+FROM   employees e FULL JOIN departments d
+       ON (e.department_id = d.department_id);
+
+--ORACLE OUTER JOIN '(+)' 위치에 따라 LEFT RIGHT 구분, ORACLE은 FULL OUTER JOIN 없음
+SELECT e.last_name,
+       e.department_id,
+       d.department_name
+FROM   employees e , departments d
+WHERE  e.department_id = d.department_id(+);
+
+SELECT e.last_name,
+       e.department_id,
+       d.department_name
+FROM   employees e , departments d
+WHERE  e.department_id(+) = d.department_id;
+
+--2. 모든 사원의 이름, 소속 부서번호 및 부서 이름을 표시하는 query를 작성하시오.
+SELECT e.last_name,
+       e.department_id,
+       d.department_name
+FROM   employees e JOIN departments d
+       ON (e.department_id = d.department_id);
+
+--1. LOCATIONS 및 COUNTRIES 테이블을 사용하여 
+--   모든 부서의 주소를 생성하는 query를 작성하시오. 
+--   출력에 위치ID(location_id), 주소(street_address), 구/군(city),
+--   시/도(state_province) 및 국가(country_name)를 표시하시오.
+SELECT d.location_id,
+       l.street_address,
+       l.city,
+       l.state_province,
+       c.country_name
+FROM   departments d
+       JOIN locations l
+            ON (d.location_id = l.location_id)
+       JOIN countries c
+            ON (l.country_id = c.country_id);
+
+--4. 사원의 이름 및 사원 번호를 
+--   해당 관리자의 이름 및 관리자 번호와 함께 표시하는 보고서를 작성하는데, 
+--   열 레이블을 각각 Employee, Emp#, Manager 및 Mgr#으로 지정하시오. (Self 조인)
+SELECT s.last_name "Employee",
+       s.manager_id AS "Emp#",
+       m.last_name AS "Manager",
+       m.employee_id AS "Mgr#"
+FROM   employees s JOIN employees m
+       ON (s.manager_id = m.employee_id);
+
+--5. King과 같이 해당 관리자가 지정되지 않은 사원도 표시하도록 4번 문장을 수정합니다. 
+--   사원 번호순으로 결과를 정렬하시오. (outer 조인, 정렬)
+SELECT s.last_name "Employee",
+       s.manager_id AS "Emp#",
+       m.last_name AS "Manager",
+       m.employee_id AS "Mgr#"
+FROM   employees s LEFT OUTER JOIN employees m
+       ON (s.manager_id = m.employee_id);
+
+--3. Toronto에 근무하는 사원에 대한 보고서를 필요로 합니다. 
+--   toronto에서 근무하는 모든 사원의 이름, 직무, 부서번호 및 부서 이름을 표시하시오. (추가조건)
+SELECT e.last_name,
+       e.job_id,
+       e.department_id,
+       d.department_name
+FROM   employees e 
+       JOIN departments d
+                 ON (e.department_id = d.department_id)
+       JOIN locations l
+                 ON (d.location_id = l.location_id)
+ AND   LOWER(l.city) = LOWER('Toronto');
+
+--6. 직무 등급 및 급여에 대한 보고서를 필요로 합니다. 
+--   모든 사원의 이름, 직무, 부서 이름, 급여 및 등급을 표시하는 query를 작성하시오. (비동등조인 포함)
+SELECT e.last_name,
+       e.job_id,
+       d.department_name,
+       e.salary,
+       j.grade_level
+FROM   employees e 
+       JOIN departments d
+            ON (e.department_id = d.department_id)
+       JOIN job_grades j
+            ON e.salary
+               BETWEEN j.lowest_sal AND j.highest_sal;
