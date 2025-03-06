@@ -1687,3 +1687,68 @@ CREATE TABLE ex_dept
     
 SELECT *
 FROM   ex_dept;
+
+SELECT * 
+FROM   dept80;
+
+ALTER TABLE dept80
+ADD         (job_id VARCHAR2(9));
+
+ALTER TABLE dept80
+ADD   (test NUMBER(3) DEFAULT 10);
+
+SELECT *
+FROM   dept80;
+
+DESC dept80;
+
+ALTER TABLE dept80
+MODIFY (last_name VARCHAR2(30));
+
+DESC dept80;
+
+ALTER TABLE dept80
+MODIFY (last_name VARCHAR2(15));
+
+ALTER TABLE dept80
+MODIFY (last_name VARCHAR2(5));
+
+ALTER TABLE dept80
+MODIFY (job_id NUMBER(10));
+
+DESC dept80;
+
+ALTER TABLE dept80
+DROP (job_id);
+
+SELECT *
+FROM   dept80;
+
+ALTER TABLE dept80
+DROP  (test);
+
+--SET UNUSED
+
+ALTER TABLE dept80
+SET   UNUSED (last_name);
+--UNUSED COLUMN DELETE
+ALTER TABLE dept80
+DROP  UNUSED COLUMNS;
+
+DROP TABLE dept80;
+
+SELECT original_name,
+       operation,
+       droptime
+FROM   recyclebin;
+
+FLASHBACK TABLE dept80 TO BEFORE DROP;
+--휴지통 비우기
+PURGE RECYCLEBIN;
+--SHIFT+DELETE
+DROP TABLE dept80 PURGE;
+
+RENAME dept90 TO d90;
+
+SELECT *
+FROM   dept90;
