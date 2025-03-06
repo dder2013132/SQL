@@ -1131,12 +1131,13 @@ FROM   employees s JOIN employees m
 
 --5. King과 같이 해당 관리자가 지정되지 않은 사원도 표시하도록 4번 문장을 수정합니다. 
 --   사원 번호순으로 결과를 정렬하시오. (outer 조인, 정렬)
-SELECT s.last_name "Employee",
-       s.manager_id AS "Emp#",
-       m.last_name AS "Manager",
-       m.employee_id AS "Mgr#"
-FROM   employees s LEFT OUTER JOIN employees m
-       ON (s.manager_id = m.employee_id);
+SELECT   s.last_name "Employee",
+         s.manager_id AS "Emp#",
+         m.last_name AS "Manager",
+         m.employee_id AS "Mgr#"
+FROM     employees s LEFT OUTER JOIN employees m
+         ON (s.manager_id = m.employee_id)
+ORDER BY s.employee_id;
 
 --3. Toronto에 근무하는 사원에 대한 보고서를 필요로 합니다. 
 --   toronto에서 근무하는 모든 사원의 이름, 직무, 부서번호 및 부서 이름을 표시하시오. (추가조건)
@@ -1162,5 +1163,527 @@ FROM   employees e
        JOIN departments d
             ON (e.department_id = d.department_id)
        JOIN job_grades j
-            ON e.salary
+            ON e.salary7
                BETWEEN j.lowest_sal AND j.highest_sal;
+               
+-- 서브쿼리는 다른 SELECT 문장의 절에 내장된 SELECT 문을 의미
+
+SELECT last_name,
+       salary
+FROM   employees
+WHERE  salary > (SELECT salary
+                 FROM   employees
+                 WHERE  last_name = 'Abel');
+
+SELECT last_name,
+       job_id
+FROM   employees
+WHERE  job_id = (SELECT job_id
+                 FROM   employees
+                 WHERE  employee_id = 141);
+
+SELECT last_name,
+       salary
+FROM   employees
+WHERE  department_id = (SELECT department_id
+                        FROM   departments
+                        WHERE  department_name = 'IT');
+                        
+
+SELECT last_name, 
+       job_id, 
+       salary
+FROM   employees
+WHERE  job_id = (SELECT job_id
+                 FROM   employees
+                 WHERE  last_name = 'Taylor')
+AND    salary > (SELECT salary
+                 FROM   employees
+                 WHERE  last_name = 'Taylor');
+                 
+SELECT last_name,
+       job_id,
+       salary
+FROM   employees
+WHERE  salary = (SELECT MIN(salary)
+                 FROM   employees);
+ 
+SELECT    department_id,
+          MIN(salary)
+FROM      employees
+GROUP BY  department_id
+HAVING MIN(salary) > (SELECT MIN(salary)
+                      FROM   employees
+                      WHERE  department_id = 50);
+                      
+--연산자에 맞게 RETURN 값 출력시킬 것
+
+SELECT last_name,
+       salary,
+       department_id
+FROM   employees
+WHERE  salary IN(SELECT   MIN(salary)
+                  FROM     employees
+                  GROUP BY department_id);
+                  
+SELECT employee_id,
+       last_name,
+       job_id,
+       salary
+FROM   employees
+WHERE  salary < ANY (SELECT salary
+                     FROM   employees
+                     WHERE  job_id = 'IT_PROG')
+  AND  job_id <> 'IT_PROG';
+  
+SELECT employee_id,
+       last_name,
+       job_id,
+       salary
+FROM   employees
+WHERE  salary = ANY (SELECT salary
+                     FROM   employees
+                     WHERE  job_id = 'IT_PROG')
+  AND  job_id <> 'IT_PROG';
+  
+SELECT employee_id,
+       last_name,
+       job_id,
+       salary
+FROM   employees
+WHERE  salary < ALL (SELECT salary
+                     FROM   employees
+                     WHERE  job_id = 'IT_PROG')
+  AND  job_id <> 'IT_PROG';
+  
+SELECT employee_id,
+       manager_id,
+       department_id
+FROM   empl_demo
+WHERE  (manager_id, department_id) IN 
+                    (SELECT manager_id, department_id
+                     FROM empl_demo
+                     WHERE first_name = 'John')
+  AND first_name <> 'John';
+  
+--  1. Zlotkey(last_name)와 동일한 부서에 속한 모든 사원의 이름과 입사일을 표시하는 질의를 작성하시오. Zlotkey는 결과에서 제외하시오.
+SELECT last_name,
+       hire_date
+FROM   employees
+WHERE  department_id = (SELECT department_id
+                        FROM employees
+                        WHERE last_name = 'Zlotkey')
+  AND  last_name <> 'Zlotkey';
+
+--2. 급여가 평균 급여보다 많은 모든 사원의 사원 번호와 이름을 표시하는 질의를 작성하고 결과를 급여에 대해 오름차순으로 정렬하시오.
+SELECT employee_id,
+       last_name
+FROM   employees
+WHERE  salary > (SELECT AVG(salary)
+                 FROM employees)
+ORDER BY salary;
+
+--3. 이름에 u가 포함된 사원과 같은 부서에서 일하는 모든 사원의 사원 번호와 이름을 표시하는 질의를 작성하고 질의를 실행하시오.
+SELECT employee_id,
+       last_name
+FROM   employees
+WHERE  department_id IN (SELECT department_id
+                        FROM   employees
+                        WHERE  last_name LIKE ('%u%'));
+
+--4. 부서 위치 ID(location_id)가 1700인 모든 사원의 이름, 부서 번호 및 업무 ID를 표시하시오.
+SELECT last_name, 
+       department_id,
+       job_id
+FROM   employees
+WHERE  department_id IN (SELECT department_id
+                        FROM   departments
+                        WHERE  location_id = '1700');
+
+--5. King에게 보고하는(manager가 King) 모든 사원의 이름과 급여를 표시하시오.
+SELECT last_name,
+       salary
+FROM   employees
+WHERE  manager_id IN (SELECT employee_id
+                     FROM   employees
+                     WHERE  last_name = 'King');
+
+--6. Executive 부서의 모든 사원에 대한 부서 번호, 이름 및 업무 ID를 표시하시오.
+SELECT department_id,
+       last_name,
+       job_id
+FROM   employees
+WHERE  department_id IN (SELECT department_id
+                         FROM   departments
+                         WHERE  department_name = 'Executive');
+
+--7. 평균 급여보다 많은 급여를 받고 이름에 u가 포함된 사원과 같은 부서에서 근무하는 모든 사원의 사원 번호, 이름 및 급여를 표시하시오.
+SELECT employee_id,
+       last_name,
+       salary
+FROM   employees
+WHERE  salary > (SELECT AVG(salary)
+                 FROM   employees)
+  AND  department_id IN (SELECT department_id
+                         FROM   employees
+                         WHERE  last_name LIKE ('%u%'));
+                         
+INSERT INTO departments(department_id,
+                        department_name,
+                        manager_id,
+                        location_id)
+VALUES (70, 
+        'Public Relations', 
+        100, 
+        1700);
+
+INSERT INTO departments(department_id,
+                        department_name,
+                        manager_id,
+                        location_id)
+VALUES (999, 
+        'Public Relations', 
+        100, 
+        1700);
+        
+SELECT *
+FROM   departments;
+
+INSERT INTO departments
+VALUES (998, 
+        'Public Relations', 
+        100, 
+        1700);
+
+INSERT INTO departments(department_id,
+                        department_name)
+VALUES (30,
+        'Purchasing');
+
+INSERT INTO departments(department_id,
+                        department_name,
+                        manager_id,
+                        location_id)
+VALUES (100,
+        'Finance',
+        NULL,
+        NULL);
+
+--기본키에 NULL값 삽입 불가(무결성 제약 조건 위배) ↓
+INSERT INTO departments
+  (department_name,
+   manager_id,
+   location_id)
+VALUES ('Finance',
+        null,
+        NULL);
+        
+--기본키에 중복값 삽입 불가(무결성 제약 조건 위배) ↓
+INSERT INTO departments
+  (department_id,
+  department_name,
+  manager_id,
+  location_id)
+VALUES (10,
+        'Finance',
+        null,
+        NULL);
+        
+-- 객체, 참조, 도메인 무결성
+
+--외래키(location_id)에 부모키에 없는 값 삽입 불가(무결성 제약 조건 위배) ↓
+INSERT INTO departments
+  (department_id,
+  department_name,
+  manager_id,
+  location_id)
+VALUES (111,
+        'Finance',
+        null,
+        1700);
+
+commit;
+rollback;
+
+INSERT INTO employees
+VALUES (113,
+        'Louis',
+        'Popp',
+        'LPOPP',
+        '515.124.4567',
+        SYSDATE,
+        'AC_ACCOUNT',
+        6900,
+        NULL,
+        205,
+        110);
+        
+INSERT INTO employees
+VALUES (114,
+        'Den',
+        'Raphealy',
+        'DRAPHEAL',
+        '515.127.4561',
+        TO_DATE('2월 3, 1999', 'MON DD, YYYY'),
+        'SA_REP',
+        11000,
+        0.2,
+        100,
+        60);
+SELECT *
+FROM   employees;
+
+INSERT INTO sales_reps
+  (id,
+   name,
+   salary,
+   commission_pct)
+SELECT employee_id,
+       last_name,
+       salary,
+       commission_pct
+FROM employees
+WHERE job_id LIKE '%REP%';
+
+SELECT *
+FROM   sales_reps;
+
+UPDATE employees
+SET    department_id = 50
+WHERE  employee_id = 113;
+
+SELECT *
+FROM   employees;
+
+UPDATE copy_emp
+SET    department_id = 110;
+
+SELECT *
+FROM   copy_emp;
+
+UPDATE employees
+SET job_id = 'IT_PROG', commission_pct = NULL
+WHERE  employee_id = 114;
+
+UPDATE employees
+SET    (job_id, salary) = (SELECT job_id,
+                                  salary
+                           FROM employees
+                           WHERE employee_id = 205)
+WHERE  employee_id = 113;
+
+SELECT *
+FROM   departments;
+
+commit;
+
+UPDATE employees
+SET    department_id = null
+WHERE  employee_id = 113;
+
+UPDATE employees
+SET    department_id = 70
+WHERE  employee_id = 999;
+
+DELETE FROM departments
+WHERE  department_name = 'Finance';
+
+DELETE FROM copy_emp;
+
+DELETE FROM employees
+WHERE  employee_id = 114;
+
+DELETE FROM departments
+WHERE  department_id IN (30, 40);
+
+--참조 무결성 제약 조건 위배 - 자식 테이블(employees table)에 참조되고 있으므로 삭제할 수 없음.
+DELETE departments
+WHERE  department_id = 90;
+
+rollback;
+
+SELECT *
+FROM copy_emp;
+
+--delete -> dml, truncate table -> ddl, dml->transaction 중, ddl->하나의 transaction이기 때문에 transaction 종료, rollback X
+TRUNCATE TABLE copy_emp;
+
+rollback;
+
+--1. 다음과 같이 실습에 사용할 MY_EMPLOYEE 테이블을 생성하시오.
+CREATE TABLE my_employee
+  (id         NUMBER(4) NOT NULL,
+   last_name  VARCHAR2(25),
+   first_name VARCHAR2(25),
+   userid     VARCHAR2(8),
+   salary     NUMBER(9,2));
+
+--2. MY_EMPLOYEE 테이블의 구조를 표시하여 열 이름을 식별하시오.
+desc my_employee;
+
+--3. 다음 예제 데이터를 MY_EMPLOYEE 테이블에 추가하시오.(INSERT)
+--ID	LAST_NAME 	FIRST_NAME 	USERID 	SALARY
+--------- --------------- --------------- ------- ------
+--      1	Patel 		Ralph 		Rpatel 	   895
+--      2	Dancs 		Betty 		Bdancs 	   860
+--      3	Biri 		Ben 		Bbiri 	  1100
+
+INSERT INTO my_employee
+    (id,
+     last_name,
+     first_name,
+     userid,
+     salary)
+VALUES (1,
+        'Patel',
+        'Ralph',
+        'Rpatel',
+        895);
+INSERT INTO my_employee
+    (id,
+     last_name,
+     first_name,
+     userid,
+     salary)
+VALUES (2,
+        'Dancs',
+        'Betty',
+        'Bdancs',
+        860);
+INSERT INTO my_employee
+    (id,
+     last_name,
+     first_name,
+     userid,
+     salary)
+VALUES (3,
+        'Biri',
+        'Ben',
+        'Bbiri',
+        1100);
+--4. 테이블에 추가한 항목을 확인하시오.(SELECT)
+SELECT *
+FROM   my_employee;
+--5. 사원 3의 성(last_name)을 Drexler로 변경하시오.(UPDATE)
+UPDATE my_employee
+SET last_name = 'Drexler'
+WHERE id = 3;
+--6. 급여가 900 미만인 모든 사원의 급여를 1000으로 변경하고 테이블의 변경 내용을 확인하시오.(UPDATE)
+UPDATE my_employee
+SET    salary = 1000
+WHERE  salary < 900;
+
+SELECT *
+FROM   my_employee;
+--7. MY_EMPLOYEE 테이블에서 사원 3을 삭제하고 테이블의 변경 내용을 확인하시오.(DELETE)
+DELETE my_employee
+WHERE  id = 3;
+
+SELECT *
+FROM   my_employee;
+--8. 테이블의 내용을 모두 삭제하고 테이블 내용이 비어 있는지 확인하시오.(DELETE)
+DELETE my_employee;
+
+SELECT *
+FROM   my_employee;
+
+commit;
+
+SELECT last_name,
+       salary
+FROM   employees
+WHERE  employee_id = 202;
+
+UPDATE employees
+SET    salary = 5000
+WHERE  employee_id = 202;
+
+--TRUNCATE -> DDL은 명령어 하나가 하나의 transaction이므로 
+--transaction 종료
+--오류가 나도 transaction 종료 -> 변경점은 반영
+--그 직후에 오류가 난 DCL, DDL 구문은 ROLLBACK
+TRUNCATE TABLE aaa;
+
+SELECT last_name,
+       salary
+FROM   employees
+WHERE  employee_id = 202;
+
+ROLLBACK;
+SELECT last_name,
+       salary
+FROM   employees
+WHERE  employee_id = 202;
+
+commit;
+
+--commit -> transaction 강제 종료
+--rollback -> transaction 종료되지 않았다면 강제 취소
+
+SELECT table_name
+FROM   user_tables;
+
+SELECT DISTINCT oject_type
+2   FROM user_ojects;
+
+CREATE TABLE hire_dates
+         (id NUMBER(8),
+          hire_date DATE DEFAULT SYSDATE);
+          
+INSERT INTO hire_dates  (id)
+VALUES (10);
+
+SELECT *
+FROM   hire_dates;
+
+INSERT INTO hire_dates (id,
+                        hire_date)
+VALUES (20,
+        TO_DATE ('25/03/01','YY/MM/DD'));
+        
+CREATE TABLE dept
+       (deptno NUMBER(2),
+        dname  VARCHAR2(14),
+        loc    VARCHAR2(13),
+        create_date DATE DEFAULT SYSDATE);
+        
+DESCRIBE dept;
+
+SELECT table_name
+FROM   user_tables;
+
+CREATE TABLE dept80
+  AS
+    SELECT employee_id,
+           last_name,
+           salary*12 ANNSAL,
+           hire_date
+    FROM   employees
+    WHERE  department_id = 80;
+    
+DESCRIBE dept80;
+
+CREATE TABLE dept90 (empno, name, sal, hiredate)
+  AS
+    SELECT employee_id,
+           last_name,
+           salary*12 ANNSAL,
+           hire_date
+    FROM   employees
+    WHERE  department_id = 90;
+    
+SELECT *
+FROM   dept90;
+
+--table data는 들어가지 않지만 table은 만들어짐
+CREATE TABLE ex_dept
+  AS
+    SELECT employee_id,
+           last_name,
+           salary,
+           hire_date
+    FROM   employees
+    WHERE  department_id = 1;
+    
+SELECT *
+FROM   ex_dept;
