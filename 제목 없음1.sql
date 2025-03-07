@@ -1752,3 +1752,595 @@ RENAME dept90 TO d90;
 
 SELECT *
 FROM   dept90;
+
+desc employees;
+--NOT NULL 제약조건은 하나의 열에 한해서 가능
+
+CREATE TABLE emp_test(
+       empid NUMBER(5),
+       empname VARCHAR2(10) NOT NULL,
+       --empname VARCHAR2(10) CONSTRAINT emp_test_empname_nn NOT NULL,
+       duty VARCHAR2(9),
+       sal  NUMBER(7,2),
+       bonus NUMBER(7,2),
+       mgr NUMBER(5),
+       hire_date DATE,
+       deptid NUMBER(2));
+       
+INSERT INTO emp_test (empid, empname)
+VALUES (10, 'AA');
+
+INSERT INTO emp_test (empid, empname)
+VALUES (10, '');
+
+CREATE TABLE dept_test(
+ deptid      NUMBER(2),
+ dname       VARCHAR2(14),
+ loc         VARCHAR2(13),
+ UNIQUE(dname));
+ 
+ INSERT INTO dept_test (deptid, dname)
+ VALUES (10, 'AA');
+ 
+ INSERT INTO dept_test (deptid, dname)
+ VALUES (20, 'AA');
+ 
+ INSERT INTO dept_test (deptid, dname)
+ VALUES (30, NULL);
+ 
+ DROP TABLE dept_test;
+ 
+ CREATE TABLE dept_test(
+ deptid      NUMBER(2) PRIMARY KEY,
+ dname       VARCHAR2(14),
+ loc         VARCHAR2(13),
+ UNIQUE(dname));
+ 
+ INSERT INTO dept_test (deptid, dname)
+ VALUES (10, 'AA');
+ 
+ INSERT INTO dept_test (deptid, dname)
+ VALUES (10, 'BB');
+ 
+ INSERT INTO dept_test (deptid, dname)
+ VALUES (NULL, 'CC');
+ 
+ INSERT INTO dept_test (deptid, dname)
+ VALUES (20, 'BB');
+ 
+ --묶어서 하나의 제약조건으로 만들려면 TABLE LEVEL에서 해야함
+ --(기본키의)후보키 = 유일성+최소성 만족
+ --하나를 선택하면 기본키, 나머지 대체키
+ --슈퍼키=유일성 만족, 최소성 불만족->더 나눌 수 있음
+ 
+ DROP TABLE emp_test;
+ 
+ --FOREIGN KEY를 TABLE LEVEL에서 적을 때
+ CREATE TABLE emp_test(
+       empid NUMBER(5) PRIMARY KEY,
+       empname VARCHAR2(10) NOT NULL,
+       --empname VARCHAR2(10) CONSTRAINT emp_test_empname_nn NOT NULL,
+       duty VARCHAR2(9),
+       sal  NUMBER(7,2),
+       bonus NUMBER(7,2),
+       mgr NUMBER(5),
+       hire_date DATE,
+       deptid NUMBER(2),
+FOREIGN KEY (deptid) REFERENCES dept_test(deptid));
+
+-- FOREIGN KEY를 COLUMN LEVEL에서 적을 때
+-- CREATE TABLE emp_test(
+--       empid NUMBER(5) PRIMARY KEY,
+--       empname VARCHAR2(10) NOT NULL,
+--       --empname VARCHAR2(10) CONSTRAINT emp_test_empname_nn NOT NULL,
+--       duty VARCHAR2(9),
+--       sal  NUMBER(7,2),
+--       bonus NUMBER(7,2),
+--       mgr NUMBER(5),
+--       hire_date DATE,
+--       deptid NUMBER(2) REFERENCES dept_test(deptid));
+
+INSERT INTO emp_test
+  (empid,
+   empname,
+   deptid)
+VALUES (10,
+        'AA',
+        10);
+
+INSERT INTO emp_test
+  (empid,
+   empname,
+   deptid)
+VALUES (20,
+        'BB',
+        10);
+
+INSERT INTO emp_test
+  (empid,
+   empname,
+   deptid)
+VALUES (30,
+        'CC',
+        30);
+        
+INSERT INTO emp_test
+  (empid,
+   empname,
+   deptid)
+VALUES (40,
+        'DD',
+        NULL);
+        
+ CREATE TABLE emp_test(
+       empid NUMBER(5) PRIMARY KEY,
+       empname VARCHAR2(10) NOT NULL,
+       --empname VARCHAR2(10) CONSTRAINT emp_test_empname_nn NOT NULL,
+       duty VARCHAR2(9),
+       sal  NUMBER(7,2),
+       bonus NUMBER(7,2),
+       mgr NUMBER(5),
+       hire_date DATE,
+       deptid NUMBER(2),
+FOREIGN KEY (deptid) REFERENCES dept_test(deptid)
+                                   ON DELETE SET NULL);
+                                   
+INSERT INTO emp_test
+  (empid,
+   empname,
+   deptid)
+VALUES (10,
+        'AA',
+        10);
+
+INSERT INTO emp_test
+  (empid,
+   empname,
+   deptid)
+VALUES (20,
+        'BB',
+        10);
+
+INSERT INTO emp_test
+  (empid,
+   empname,
+   deptid)
+VALUES (30,
+        'CC',
+        20);
+        
+INSERT INTO emp_test
+  (empid,
+   empname,
+   deptid)
+VALUES (40,
+        'DD',
+        NULL);
+        
+        
+SELECT *
+FROM   dept_test;
+
+SELECT *
+FROM   emp_test;
+
+DELETE dept_test
+WHERE  deptid = 10;
+
+ALTER TABLE emp_test
+ADD FOREIGN KEY(mgr) REFERENCES emp_test(empid);
+
+ALTER TABLE dept_test
+MODIFY dname NOT NULL;
+
+--PRIMARY KEY에 딸린 FOREIGN KEY까지 삭제 (CASCADE)
+ALTER TABLE dept_test
+DROP PRIMARY KEY CASCADE;
+
+SELECT constraint_name,
+       constraint_type,
+       search_condition
+FROM   user_constraints;
+
+SELECT constraint_name,
+       column_name
+FROM   user_cons_columns;
+
+SELECT constraint_name, 
+       constraint_type,
+       search_condition
+FROm   user_constraints
+WHERE  table_name = 'EMP_TEST';
+
+CREATE VIEW empvu80
+  AS SELECT employee_id, last_name, salary
+     FROM   employees
+     WHERE  department_id = 80;
+     
+SELECT *
+FROM   empvu80;
+
+CREATE VIEW salvu50
+  AS SELECT employee_id ID_NUMBER, 
+            last_name NAME,
+            salary*12 ANN_SALARY
+FROM        employees
+WHERE       department_id = 50;
+
+SELECT *
+FROM   salvu50;
+
+CREATE OR REPLACE VIEW empvu80
+  (id_number,
+   name,
+   sal,
+   department_id)
+AS SELECT employee_id,
+          first_name || ' '
+          || last_name,
+             salary,
+             department_id
+   FROM   employees
+   WHERE  department_id = 80;
+   
+CREATE OR REPLACE VIEW dept_sum_vu
+  (name, 
+   minsal, 
+   maxsal, 
+   avgsal)
+AS SELECT   d.department_name, 
+            MIN(e.salary),
+            MAX(e.salary),
+            AVG(e.salary)
+   FROM     employees e JOIN departments d
+   ON       (e.department_id = d.department_id)
+   GROUP BY d.department_name;
+   
+SELECT *
+FROM   dept_sum_vu;
+
+DELETE empvu80
+WHERE  id_number = 176;
+
+SELECT *
+FROM   employees;
+
+ROLLBACK;
+
+UPDATE salvu50
+SET    name = 'YEDAM'
+WHERE  id_number = 144;
+
+CREATE OR REPLACE VIEW empvu20
+AS SELECT *
+   FROM employees
+   WHERE department_id = 20 
+             WITH CHECK OPTION;
+             
+UPDATE empvu20
+SET    department_id = 10
+WHERE  employee_id = 202;
+
+DROP VIEW empvu80;
+
+CREATE INDEX emp_last_name_idx
+ON           employees(last_name);
+
+SELECT ic.index_name, 
+       ic.column_name,
+       ic.column_position, 
+       ix.uniqueness
+FROM   user_indexes ix, 
+       user_ind_columns ic
+WHERE  ic.index_name = ix.index_name
+AND    ic.table_name = 'EMPLOYEES';
+
+DROP INDEX emp_last_name_idx;
+
+CREATE SEQUENCE dept_deptid_seq
+                INCREMENT BY 10
+                START WITH 120
+                MAXVALUE 9999
+                NOCACHE
+                NOCYCLE;
+
+INSERT INTO departments(department_id,
+            department_name,
+            location_id)
+VALUES      (dept_deptid_seq.NEXTVAL,
+            'Support', 2500);
+
+ROLLBACK;
+
+ALTER SEQUENCE dept_deptid_seq
+               INCREMENT BY 20
+               MAXVALUE 999999
+               NOCACHE
+               NOCYCLE;
+               
+DROP SEQUENCE dept_deptid_seq;
+
+CREATE SYNONYM d_sum
+FOR  dept_sum_vu;
+
+SELECT *
+FROM   d_sum;
+
+SELECT *
+FROM   dept_sum_vu;
+
+DROP VIEW dept_sum_vu;
+
+DROP SYNONYM d_sum;
+
+SELECT *
+FROm   system_privilege_map;
+
+GRANT select
+ON    employees
+TO    demo;
+
+REVOKE select
+ON     employees
+FROM   demo;
+
+--1. 기존의 DEPT 테이블을 삭제하고 다음 테이블 인스턴트 차트를 기반으로 DEPT 테이블을 생성하시오. 
+--  테이블을 생성한 후, 테이블이 생성되었는지 확인하시오.
+--
+--열이름 		| ID 		| NAME
+--키유형 		| Primary Key	|
+--널/고유		|		|
+--FK테이블		|		|
+--FK 열	 	|		|
+--데이터유형		| NUMBER 	| VARCHAR2
+--길이 		| 7 		| 25
+DROP TABLE dept;
+CREATE TABLE dept
+  (id NUMBER(7) PRIMARY KEY,
+   NAME VARCHAR2(25));
+
+SELECT *
+FROM   dept;
+   
+
+--2. DEPARTMENTS 테이블의 선택된 열(department_id, department_name)의 데이터를 이용하여 
+--   DEPT 테이블에 추가하시오. (힌트:INSERT INTO 서브쿼리)
+INSERT INTO dept
+  (id,
+   name)
+SELECT department_id,
+       department_name
+FROM   departments;
+
+--3. 기존 EMP 테이블을 삭제한 후 다음 테이블 인스턴스 차트를 기반으로 EMP 테이블을 생성하시오.
+--   테이블을 생성한 후, 테이블이 생성되었는지 확인하시오.
+--
+--열이름 		| ID 	  | LAST_NAME 	| FIRST_NAME 	| DEPT_ID
+--키유형		|	  |		|		|
+--널/고유		|	  |		|		|
+--FK테이블 	|	  |		|		| DEPT
+--FK 열 		|	  |		|		| ID
+--데이터유형	| NUMBER  | VARCHAR2 	| VARCHAR2 	| NUMBER
+--길이 		| 7 	  | 25 		| 25 		| 7
+
+CREATE TABLE emp
+  (id NUMBER(7),
+   last_name VARCHAR2(25),
+   first_name VARCHAR2(25),
+   dept_id NUMBER(7),
+FOREIGN KEY (dept_id) REFERENCES dept(id));
+
+SELECT *
+FROM   emp;
+
+--4. EMPLOYEES 테이블 구조를 기반으로 EMPLOYEES2 테이블을 생성하시오.
+--   EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY 및 DEPARTMENT_ID 열만 포함시키고 
+--   새 테이블의 열 이름을 각각 ID, FIRST_NAME, LAST_NAME, SALARY 및 DEPT_ID로 지정하시오.
+CREATE TABLE employees2
+  (id,
+   first_name,
+   last_name,
+   salary,
+   dept_id)
+  AS
+    SELECT employee_id,
+           first_name,
+           last_name,
+           salary,
+           department_id
+    FROM   employees
+    WHERE  department_id = 1;
+
+SELECT *
+FROM   employees2;
+
+--5. EMPLOYEES2 테이블에 job 컬럼을 추가하시오. 데이터타입은 VARCHAR2이고, 길이는 10입니다.
+ALTER TABLE employees2
+ADD         (job VARCHAR2(10));
+ 
+--6. EMPLOYEES2 테이블을 삭제하시오.
+DROP TABLE employees2;
+
+--1. EMPLOYEES 테이블에서 사원 번호, 사원 이름 및 부서 번호를 기반으로 하는 
+--   EMPLOYEES_VU라는 뷰를 생성하시오. 
+--   사원 이름의 머리글을 EMPLOYEE로 변경하시오.
+CREATE VIEW employees_vu
+  AS
+   SELECT employee_id,
+          last_name EMPLOYEE,
+          department_id
+   FROM   employees;
+
+--2. EMPLOYEES_VU 뷰의 내용을 표시하시오.
+SELECT *
+FROM   employees_vu;
+
+--3. EMPLOYEES_VU 뷰를 사용하여 모든 사원의 이름 및 부서 번호를 표시하는 질의를 작성하시오.
+SELECT EMPLOYEE,
+       department_id
+FROM   employees_vu;
+
+--4. 부서 50의 모든 사원에 대한 사원 번호, 사원 이름 및 부서 번호를 포함하는 
+--   DEPT50이라는 뷰를 생성하고 
+--   뷰의 열 레이블을 EMPNO, EMPLOYEE 및 DEPTNO로 지정하시오. 
+CREATE VIEW dept50
+  AS
+   SELECT employee_id EMPNO,
+          last_name EMPLOYEE,
+          department_id DEPTNO
+   FROM   employees
+   WHERE  department_id = 50;
+
+
+--5. DEPT50 뷰의 구조와 내용을 표시하시오.
+SELECT *
+FROM   dept50;
+
+DESC dept50;
+--6. 모든 사원의 이름, 부서 이름, 급여 및 급여 등급을 기반으로 하는 
+--   SALARY_VU라는 뷰를 생성하시오. 
+--   EMPLOYEES, DEPARTMENTS 및 JOB_GRADES 테이블을 사용하고 
+--   열 레이블을 각각 Employee, Department, Salary 및 Grade로 지정하시오. XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+CREATE VIEW salary_vu
+  AS
+   SELECT e.last_name AS 'Employee',
+          d.department_name AS 'Department',
+          e.salary AS 'Salary',
+          j.grade_level AS 'Grade'
+   FROM   employees e
+   JOIN departments d
+   ON   (d.department_name)
+   JOIN job_grades j
+   ON   (j.salary)
+   WHERE  j.grade_level BETWEEN j.lowest_sal AND j.highest_sal;
+
+--7. 기본 키 열에 사용할 시퀀스를 생성하시오. 시퀀스 값은 300부터 시작하여 10씩 증가하며 최대 1000까지 가능하도록 하고 시퀀스 이름은 DEPT_ID_SEQ로 지정하시오. 기존 동일한 이름의 시퀀스가 존재하면 삭제를 먼저 하시오.
+--
+--8. DEPARTMENTS 테이블의 department_name column에 인덱스를 생성하시오.
+--
+--9. EMPLOYEES 테이블에 대해 E 라는 동의어를 생성하시오.
+
+SELECT employee_id,
+       last_name,
+       salary,
+       department_id
+FROM   employees
+WHERE  salary BETWEEN 7000 AND 12000
+  AND  last_name LIKE ('H%');
+  
+SELECT employee_id,
+       last_name,
+       job_id,
+       salary,
+       department_id
+FROM   employees
+WHERE  department_id IN (50,60)
+  AND  salary > 5000;
+  
+SELECT last_name,
+       salary,
+       CASE WHEN salary <= 5000  THEN salary * 1.2
+            WHEN salary <= 10000 THEN salary * 1.15
+            WHEN salary <= 15000 THEN salary * 1.1
+                                 ELSE salary
+       END AS "REVISED_SALARY"
+FROM   employees
+WHERE  employee_id = '&employee_num';
+
+SELECT d.department_id,
+       d.department_name,
+       l.city
+FROM   departments d JOIN locations l
+       ON (d.location_id = l.location_id);
+       
+SELECT employee_id,
+       last_name,
+       job_id
+FROM   employees
+WHERE  department_id IN (SELECT department_id
+                         FROM   departments
+                         WHERE  UPPER(department_name) LIKE 'IT');
+                         
+SELECT employee_id,
+       first_name,
+       last_name,
+       email,
+       phone_number,
+       TO_CHAR(hire_date,'YY-DY-DD'), --형식 맞추기
+       job_id
+FROM   employees
+WHERE  hire_date < TO_DATE('2014/01/01','YYYY/MM/DD')
+  AND  UPPER(job_id) IN ('ST_CLERK');
+
+SELECT last_name,
+       job_id,
+       salary,
+       TO_CHAR(commission_pct) --소수점 앞 0 떼기
+FROM   employees
+WHERE  commission_pct IS NOT NULL
+ORDER BY salary DESC;
+
+CREATE TABLE prof
+    (profno NUMBER(4),
+     name   VARCHAR2(15) NOT NULL,
+     id     VARCHAR2(15) NOT NULL,
+     hiredate date,
+     pay NUMBER(4));
+
+INSERT INTO prof
+  (profno,
+   name,
+   id,
+   hiredate,
+   pay)
+VALUES (1001,
+        'Mark',
+        'm1001',
+        TO_DATE('07/03/01','YY/MM/DD'),
+        800);
+
+INSERT INTO prof
+  (profno,
+   name,
+   id,
+   hiredate)
+VALUES (1003,
+        'Adam',
+        'a1003',
+        TO_DATE('11/03/02','YY/MM/DD'));
+        
+commit;
+select *
+from prof;
+
+UPDATE prof
+SET    pay = 1200
+WHERE  profno = 1001;
+
+DELETE FROM prof
+WHERE       profno = 1003;
+
+ALTER TABLE prof
+ADD PRIMARY KEY(profno);
+
+ALTER TABLE prof
+ADD   (gender CHAR(3));
+
+ALTER TABLE prof
+MODIFY (name VARCHAR2(20));
+
+desc prof;
+
+SELECT A.TABLE_NAME
+     , A.CONSTRAINT_NAME
+     , B.COLUMN_NAME     
+     , B.POSITION
+  FROM USER_CONSTRAINTS  A
+     , USER_CONS_COLUMNS B
+ WHERE A.TABLE_NAME      = 'JOBS'
+   AND A.CONSTRAINT_TYPE = 'P' 
+
+   AND A.OWNER           = B.OWNER
+   AND A.CONSTRAINT_NAME = B.CONSTRAINT_NAME
+ ORDER BY B.POSITION
+;
